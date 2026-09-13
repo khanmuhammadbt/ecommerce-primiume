@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="admin-section container">
+    <h1>Edit About Page</h1>
+    <form action="{{ url_for('main.admin_edit_about') }}" method="post" class="admin-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="about-content">About Content</label>
+        <textarea id="about-content" name="content" rows="10">{{ content }}</textarea>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</section>
+{% endblock %}

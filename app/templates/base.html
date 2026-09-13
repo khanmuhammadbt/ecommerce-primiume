@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index,follow">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="{{ meta_description | default('Shop electronics, accessories, and daily deals at Banta Bazar.') }}">
+    <meta name="author" content="Banta Bazar Team">
+    <meta property="og:title" content="Banta Bazar - {{ title }}">
+    <meta property="og:description" content="{{ meta_description | default('Shop electronics, accessories, and daily deals at Banta Bazar.') }}">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{{ og_image_url | default(url_for('static', filename='images/logo.png')) }}">
+    <meta property="og:url" content="{{ canonical_url | default(request.url) }}">
+    <link rel="canonical" href="{{ canonical_url | default(request.url) }}">
+    <title>Banta Bazar - {{ title }}</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+
+    {% if request.path == url_for('main.shop') %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}">
+    {% endif %}
+
+    {% if request.path.startswith('/product/') %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/product-detail.css') }}">
+    {% endif %}
+
+    {% if request.path in [url_for('main.about'), url_for('main.contact')] %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/about-contact.css') }}">
+    {% endif %}
+
+    {% if request.path == url_for('main.cart') %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}" media="print" onload="this.media='all'">
+    {% endif %}
+
+    {% if request.path == url_for('main.checkout') %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+    {% endif %}
+
+    {% if request.path.startswith('/admin') %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}" media="print" onload="this.media='all'">
+    {% endif %}
+
+    {% if request.path == url_for('main.admin_dashboard') or request.path.startswith('/admin/dashboard') %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-dashboard.css') }}" media="print" onload="this.media='all'">
+    {% endif %}
+
+    {% if request.path.startswith('/admin') %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% endif %}
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script type="application/ld+json">
+    {{ structured_data | tojson | safe }}
+    </script>
+</head>
+<body>
+{% set is_admin_page = session.get('is_admin') and request.path.startswith('/admin') %}
+
+<!-- ==========================================================================
+     HEADER / TOPBAR
+     ========================================================================== -->
+<header class="header topbar">
+    <div class="container header-inner">
+        <a class="brand" href="{{ url_for('main.home') }}">BANTA <i>BAZAR</i></a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            <button type="button" class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mainNavMenu" aria-label="Toggle navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-menu" id="mainNavMenu">
+                <li><a href="{{ url_for('main.home') }}">Home</a></li>
+                <li><a href="{{ url_for('main.shop') }}">Shop</a></li>
+                <li><a href="{{ url_for('main.about') }}">About</a></li>
+                <li><a href="{{ url_for('main.contact') }}">Contact</a></li>
+            </ul>
+        </nav>
+
+        <!-- Search Form -->
+        <form id="searchForm"
+              class="search topbar-right"
+              action="{{ url_for('main.search') }}"
+              method="get">
+
+            <input
+                type="search"
+                name="q"
+                placeholder="Search products"
+                value="{{ request.args.get('q', '') }}"
+                aria-label="Search for products"
+            >
+
+            <button type="submit" aria-label="Search">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m21 21-4.34-4.34"></path>
+                    <circle cx="11" cy="11" r="8"></circle>
+                </svg>
+            </button>
+        </form>
+
+        <!-- Right Side Actions -->
+        <div class="topbar-actions">
+
+            <!-- Mobile Search Toggle (SVG icon) -->
+            <button type="button" class="search-toggle" id="searchToggle" aria-label="Open Search">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+
+            <!-- Cart Link (SVG icon) -->
+            <a class="cart-link" href="{{ url_for('main.cart') }}" aria-label="View Cart, {{ session.get('cart', {}) | length }} items">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    <path d="M3.103 6.034h17.794"></path>
+                    <path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"></path>
+                </svg>
+                <span class="cart-count" aria-hidden="true">{{ session.get('cart', {}) | length }}</span>
+            </a>
+
+        </div>
+
+    </div>
+</header>
+
+<!-- ==========================================================================
+     ADMIN SIDEBAR (only on admin pages)
+     ========================================================================== -->
+{% if is_admin_page %}
+<div class="admin-shell-layout container">
+    <button type="button" class="admin-sidebar-toggle" id="adminSidebarToggle" aria-label="Toggle admin menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <div class="admin-sidebar-overlay" id="adminSidebarOverlay"></div>
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="admin-sidebar-header">
+            <h2>Admin Panel</h2>
+            <p>Manage your store</p>
+        </div>
+        <nav class="admin-sidebar-nav">
+            <a href="{{ url_for('main.admin_dashboard') }}#dashboard-overview" class="admin-sidebar-link{% if request.path in ['/admin', '/admin/dashboard'] %} active{% endif %}" data-admin-nav>Dashboard</a>
+            <a href="{{ url_for('main.admin_dashboard_analytics') }}" class="admin-sidebar-link{% if request.path == '/admin/dashboard/analytics' %} active{% endif %}">Analytics</a>
+            <a href="{{ url_for('main.admin_dashboard') }}#add-product-section" class="admin-sidebar-link" data-admin-nav>Add Product</a>
+            <a href="{{ url_for('main.admin_dashboard') }}#all-products-section" class="admin-sidebar-link" data-admin-nav>See All Products</a>
+            <a href="{{ url_for('main.admin_dashboard') }}#offers-section" class="admin-sidebar-link" data-admin-nav>Offers</a>
+            <a href="{{ url_for('main.admin_dashboard') }}#hero-section" class="admin-sidebar-link" data-admin-nav>Hero</a>
+            <a href="{{ url_for('main.admin_dashboard') }}#badges-section" class="admin-sidebar-link" data-admin-nav>Badges</a>
+            <a href="{{ url_for('main.admin_dashboard') }}#filters-section" class="admin-sidebar-link" data-admin-nav>Homepage Filters</a>
+            <a href="{{ url_for('main.admin_dashboard') }}#delivery-settings-section" class="admin-sidebar-link" data-admin-nav>Delivery Fee</a>
+            <a href="{{ url_for('main.admin_dashboard') }}#orders-section" class="admin-sidebar-link" data-admin-nav>Orders</a>
+            <a href="{{ url_for('main.admin_edit_about') }}" class="admin-sidebar-link{% if request.path == url_for('main.admin_edit_about') %} active{% endif %}">About Page</a>
+            <a href="{{ url_for('main.admin_edit_contact') }}" class="admin-sidebar-link{% if request.path == url_for('main.admin_edit_contact') %} active{% endif %}">Contact Page</a>
+            <a href="{{ url_for('main.admin_dashboard') }}#password-section" class="admin-sidebar-link admin-sidebar-link--danger" data-admin-nav>Change Password</a>
+            <a href="{{ url_for('main.admin_logout') }}" class="admin-sidebar-link admin-sidebar-link--danger">Logout</a>
+        </nav>
+    </aside>
+    <div class="admin-content-area">
+{% endif %}
+
+<!-- ==========================================================================
+     FLASH MESSAGES
+     ========================================================================== -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container container">
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}
+
+<!-- ==========================================================================
+     PAGE CONTENT
+     ========================================================================== -->
+<main>
+{% block content %}{% endblock %}
+</main>
+
+{% if is_admin_page %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ==========================================================================
+     FOOTER
+     ========================================================================== -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <div class="footer-col">
+            <h3>Banta bazar</h3>
+            <p>Your trusted online electronics store. Best prices, best quality.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Quick Links</h4>
+            <a href="{{ url_for('main.home') }}">Home</a>
+            <a href="{{ url_for('main.about') }}">About Us</a>
+            <a href="{{ url_for('main.contact') }}">Contact</a>
+            {% if session.get('is_admin') %}
+            <a href="{{ url_for('main.admin_dashboard') }}">Admin</a>
+            {% else %}
+            <a href="{{ url_for('main.admin_login') }}">Admin</a>
+            {% endif %}
+        </div>
+        <div class="footer-col">
+            <h4>Contact</h4>
+            <p>Email: info@bantabazar.com</p>
+            <p>Phone: +92 32 00 33 77 20</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2026 banta bazar. All rights reserved.</p>
+    </div>
+</footer>
+
+<!-- ==========================================================================
+     SCRIPTS
+     ========================================================================== -->
+
+<!-- Mobile search toggle -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchBtn = document.getElementById("searchToggle");
+    const searchForm = document.getElementById("searchForm");
+    const navToggle = document.getElementById("navToggle");
+    const navMenu = document.getElementById("mainNavMenu");
+
+    if (searchBtn && searchForm) {
+        searchBtn.addEventListener("click", function () {
+            searchForm.classList.toggle("active");
+            if (navMenu) navMenu.classList.remove("active");
+            if (navToggle) navToggle.setAttribute("aria-expanded", "false");
+        });
+
+        document.addEventListener("click", function (e) {
+            if (
+                !searchForm.contains(e.target) &&
+                !searchBtn.contains(e.target)
+            ) {
+                searchForm.classList.remove("active");
+            }
+        });
+    }
+
+    if (navToggle && navMenu) {
+        navToggle.addEventListener("click", function () {
+            const isExpanded = navToggle.getAttribute("aria-expanded") === "true";
+            navToggle.setAttribute("aria-expanded", String(!isExpanded));
+            navMenu.classList.toggle("active", !isExpanded);
+            if (searchForm) searchForm.classList.remove("active");
+        });
+
+        navMenu.querySelectorAll("a").forEach(function (link) {
+            link.addEventListener("click", function () {
+                navMenu.classList.remove("active");
+                navToggle.setAttribute("aria-expanded", "false");
+            });
+        });
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" && navMenu.classList.contains("active")) {
+                navMenu.classList.remove("active");
+                navToggle.setAttribute("aria-expanded", "false");
+                navToggle.focus();
+            }
+        });
+    }
+});
+</script>
+
+<!-- Admin sidebar toggle (only on admin pages) -->
+{% if is_admin_page %}
+<script>
+(function () {
+    var toggleBtn = document.getElementById('adminSidebarToggle');
+    var sidebar = document.getElementById('adminSidebar');
+    var overlay = document.getElementById('adminSidebarOverlay');
+
+    if (!toggleBtn || !sidebar || !overlay) return;
+
+    function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('open');
+        toggleBtn.classList.add('active');
+        toggleBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('open');
+        toggleBtn.classList.remove('active');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    toggleBtn.addEventListener('click', function () {
+        if (sidebar.classList.contains('open')) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+
+    sidebar.querySelectorAll('[data-admin-nav], .admin-sidebar-link').forEach(function (link) {
+        link.addEventListener('click', function () {
+            if (window.matchMedia('(max-width: 900px)').matches) {
+                closeSidebar();
+            }
+        });
+    });
+
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 900) {
+            closeSidebar();
+        }
+    });
+})();
+</script>
+{% endif %}
+
+<!-- Cart AJAX functionality -->
+<script src="{{ url_for('static', filename='js/cart-ajax.js') }}"></script>
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js" defer></script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

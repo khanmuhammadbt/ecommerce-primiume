@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-content container">
+    <h1>Checkout</h1>
+    <div class="cart-grid">
+        <div class="cart-card checkout-card">
+            <h2>Customer Details</h2>
+            <form class="admin-form checkout-form" action="{{ url_for('main.checkout') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="checkout-name">Full name</label>
+                <input id="checkout-name" type="text" name="name" placeholder="Full name" value="{{ user_details.get('name', '') }}" required>
+                <label for="checkout-email">Email address</label>
+                <input id="checkout-email" type="email" name="email" placeholder="Email address" value="{{ user_details.get('email', '') }}" required>
+                <label for="checkout-phone">Phone number</label>
+                <input id="checkout-phone" type="text" name="phone" placeholder="Phone number" value="{{ user_details.get('phone', '') }}" required>
+                <label for="checkout-address">Shipping address</label>
+                <textarea id="checkout-address" name="address" rows="4" placeholder="Shipping address" required>{{ user_details.get('address', '') }}</textarea>
+                <div class="coupon-row">
+                    <label for="coupon-code">Coupon code</label>
+                    <input id="coupon-code" type="text" name="coupon_code" placeholder="Coupon code" value="{{ coupon_code or '' }}">
+                    <button type="submit" name="action" value="apply" class="btn btn-secondary">Apply Coupon</button>
+                </div>
+                <div class="delivery-note-row">
+                    <label for="delivery-agree">
+                        <input id="delivery-agree" type="checkbox" name="delivery_agree" required>
+                        I agree that delivery will take 7-8 working days and delivery charges may vary, with an average charge of approximately 100-200 PKR (subject to change).
+                    </label>
+                </div>
+                <button type="submit" name="action" value="place_order" class="btn btn-primary">Place Order</button>
+            </form>
+        </div>
+        <div class="cart-card checkout-summary-card">
+            <h2>Order Summary</h2>
+            {% for item in cart %}
+            <div class="summary-item">
+                <img src="{{ item.image }}" alt="{{ item.name }}">
+                <div class="summary-item-body">
+                    <p class="summary-item-name">{{ item.name }}</p>
+                    <p class="summary-item-meta">x {{ item.quantity }} — {{ item.item_total }}</p>
+                </div>
+            </div>
+            {% endfor %}
+            <hr>
+            <p class="price">Original total: {{ subtotal }}</p>
+            <p class="price">Delivery charges: {{ delivery_charge }}</p>
+            {% if discount_text %}
+            <p class="discount">Discount: {{ discount_text }}</p>
+            <p class="price">Discount amount: {{ discount_amount }}</p>
+            <p class="price">Final price: {{ total }}</p>
+            {% else %}
+            <p class="price">Final price: {{ total }}</p>
+            {% endif %}
+            <a class="btn btn-secondary" href="{{ url_for('main.cart') }}">Back to cart</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

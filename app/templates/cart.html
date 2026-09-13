@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<section class="page-content container">
+    <h1>Your Cart</h1>
+    {% if cart %}
+    <div class="cart-grid">
+        {% for item in cart %}
+        <article class="cart-card">
+            <img src="{{ item.image }}" alt="{{ item.name }}">
+            <div class="cart-body">
+                <span>{{ item.category }}</span>
+                <strong>{{ item.name }}</strong>
+                <p class="price">{{ item.price }} x {{ item.quantity }}</p>
+                <p class="price">Total: {{ item.item_total }}</p>
+                <div class="cart-actions">
+                    <form action="{{ url_for('main.update_cart_quantity') }}" method="post" class="quantity-controls">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="product_id" value="{{ item.id }}">
+                        <button type="submit" name="action" value="decrease" class="btn btn-secondary" aria-label="Decrease quantity for {{ item.name }}">-</button>
+                        <span class="qty-display" aria-live="polite">{{ item.quantity }}</span>
+                        <button type="submit" name="action" value="increase" class="btn btn-secondary" aria-label="Increase quantity for {{ item.name }}">+</button>
+                    </form>
+                    <form action="{{ url_for('main.remove_from_cart') }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="product_id" value="{{ item.id }}">
+                        <button type="submit" class="btn btn-secondary" aria-label="Remove {{ item.name }} from cart">Remove</button>
+                    </form>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    <div class="cart-total">
+        <h2>Grand Total</h2>
+        <p>{{ total }}</p>
+        <a class="btn btn-primary" href="{{ url_for('main.checkout') }}">Proceed to checkout</a>
+    </div>
+    {% else %}
+    <p>Your cart is empty. Add products to see them here.</p>
+    {% endif %}
+</section>
+{% endblock %}

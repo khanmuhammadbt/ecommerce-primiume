@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% block content %}
+{% set slider_slides = (hero_slides[:1] if hero_slides else [{
+    'eyebrow': hero.eyebrow,
+    'headline': hero.headline,
+    'description': hero.description,
+    'primary_button_text': hero.primary_button_text,
+    'secondary_button_text': hero.secondary_button_text,
+    'image': hero.image
+}]) %}
+
+<!-- Hero section: slider jismein do hisson ka layout hai.
+     .hero-left mein eyebrow, headline, description aur primary/secondary buttons hoti hain.
+     .hero-right mein hero image dikhti hai.
+    Hero mein ab sirf ek slide render hoti hai.
+     Agar hero_slides available na ho to hero object se fallback values use ki jati hain. -->
+<section class="hero hero-slider container" aria-label="Featured products and deals">
+    <div class="hero-slides">
+        {% for slide in slider_slides %}
+        <article class="hero-slide {% if loop.first %}is-active{% endif %}" aria-label="Slide {{ loop.index }}" {% if not loop.first %}aria-hidden="true"{% endif %} data-category="{{ slide.category or '' }}" data-filter-url="{{ url_for('main_home_bp.home', category=slide.category) if slide.category else url_for('main_home_bp.home') }}" tabindex="0" role="button" aria-label="{{ 'View products in ' ~ slide.category if slide.category else 'View all products' }}">
+            <div class="hero-left">
+                <p class="eyebrow">{{ slide.eyebrow or 'Featured' }}</p>
+                <h1 id="home-heading">{{ slide.headline or 'Welcome to Banta Bazar' }}</h1>
+                <p>{{ slide.description or 'Shop trusted electronics and accessories with dependable service.' }}</p>
+                {% if slide.category %}
+                <p class="hero-slide-tag">View {{ slide.category }} products</p>
+                {% endif %}
+            </div>
+            <div class="hero-right">
+                <img src="{{ slide.image or hero.image }}" alt="{{ slide.headline or 'Hero banner image' }}"{% if loop.first %} fetchpriority="high"{% endif %}>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% if slider_slides|length > 1 %}
+    <div class="hero-controls" aria-label="Hero slider navigation">
+        <button type="button" class="hero-nav hero-nav-prev" aria-label="Previous slide">
+            <span aria-hidden="true">‹</span>
+        </button>
+
+        <div class="hero-dots" role="group" aria-label="Hero slide selector buttons">
+            {% for slide in slider_slides %}
+            <button type="button" class="dot {% if loop.first %}active{% endif %}" aria-label="Go to slide {{ loop.index }}" {% if loop.first %}aria-current="page"{% endif %} data-slide="{{ loop.index0 }}"></button>
+            {% endfor %}
+        </div>
+
+        <button type="button" class="hero-nav hero-nav-next" aria-label="Next slide">
+            <span aria-hidden="true">›</span>
+        </button>
+    </div>
+    {% endif %}
+</section>
+
+
+<section class="features container" aria-label="Trust badges">
+    <!-- Desktop grid (default) -->
+    <div class="features-grid">
+        {% for badge in trust_badges %}
+        <div class="feature-card">
+            <span>{{ badge.icon }} {{ badge.title }}</span>
+            <p>{{ badge.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Mobile slider (hidden on desktop) -->
+    <div class="feature-slides" aria-hidden="true">
+        {% for badge in trust_badges %}
+        <article class="feature-slide {% if loop.first %}is-active{% endif %}" aria-label="Badge {{ loop.index }}" {% if not loop.first %}aria-hidden="true"{% endif %}>
+            <div class="feature-card">
+                <span>{{ badge.icon }} {{ badge.title }}</span>
+                <p>{{ badge.description }}</p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <!-- badge navigation dots removed (mobile slider runs without visible dots) -->
+</section>
+
+
+
+<section class="products container" id="products">
+    <div class="section-header">
+        <div>
+            <h2>Our Products</h2>
+            <p>The best choice for modern technology and everyday essentials.</p>
+        </div>
+    </div>
+
+    <form class="filters" method="get" action="{{ url_for('main.home') }}">
+        <label for="category-filter" class="sr-only">Filter by category</label>
+        <select id="category-filter" name="category" aria-label="Filter products by category">
+            <option value="">All Categories</option>
+            {% for item in category_filters %}
+            <option value="{{ item.value }}" {% if selected_category == item.value %}selected{% endif %}>{{ item.label }}</option>
+            {% endfor %}
+        </select>
+        <label for="price-filter" class="sr-only">Filter by price</label>
+        <select id="price-filter" name="price" aria-label="Filter products by price">
+            <option value="">All Prices</option>
+            {% for item in price_filters %}
+            <option value="{{ item.value }}" {% if selected_price == item.value %}selected{% endif %}>{{ item.label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ url_for('main.home') }}" class="btn btn-secondary">Reset</a>
+    </form>
+
+<div class="product-grid" id="productGrid" data-current-page="1" data-page-size="6" data-load-more-url="{{ url_for('main_home_bp.load_more_products') }}">
+    {% include 'partials/product_cards.html' %}
+</div>
+
+{% if has_more %}
+<div class="see-more-wrap">
+    <button type="button" id="seeMoreBtn" class="btn btn-secondary">See More</button>
+</div>
+{% endif %}
+</section>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const productGrid = document.getElementById('productGrid');
+    const seeMoreBtn = document.getElementById('seeMoreBtn');
+    const loadMoreUrl = productGrid?.dataset.loadMoreUrl;
+    let currentPage = parseInt(productGrid?.dataset.currentPage || '1', 10);
+
+    function appendProducts(html) {
+        productGrid.insertAdjacentHTML('beforeend', html);
+    }
+
+    async function loadNextBatch() {
+        if (!loadMoreUrl || !seeMoreBtn) return;
+
+        const pageToLoad = currentPage + 1;
+        seeMoreBtn.disabled = true;
+        seeMoreBtn.textContent = 'Loading...';
+
+        const url = new URL(loadMoreUrl, window.location.origin);
+        url.searchParams.set('page', String(pageToLoad));
+        url.searchParams.set('category', {{ selected_category | tojson }});
+        url.searchParams.set('price', {{ selected_price | tojson }});
+
+        try {
+            const response = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const data = await response.json();
+            appendProducts(data.html);
+
+            if (data.has_more) {
+                currentPage = pageToLoad;
+                seeMoreBtn.disabled = false;
+                seeMoreBtn.textContent = 'See More';
+            } else {
+                seeMoreBtn.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Could not load more products:', error);
+            seeMoreBtn.disabled = false;
+            seeMoreBtn.textContent = 'See More';
+        }
+    }
+
+    if (seeMoreBtn) {
+        seeMoreBtn.addEventListener('click', loadNextBatch);
+        if (!{{ 'true' if has_more else 'false' }}) {
+            seeMoreBtn.style.display = 'none';
+        }
+    }
+
+    // Hero image slider: scoped dots and auto-rotate.
+    const slides = Array.from(document.querySelectorAll('.hero-slide'));
+    const heroDots = Array.from(document.querySelectorAll('.hero-dots .dot'));
+    const prevBtn = document.querySelector('.hero-nav-prev');
+    const nextBtn = document.querySelector('.hero-nav-next');
+    let activeIndex = 0;
+    let sliderTimer;
+
+    slides.forEach(function (slide) {
+        const targetUrl = slide.dataset.filterUrl;
+        if (!targetUrl) return;
+
+        slide.addEventListener('click', function (event) {
+            if (event.target.closest('button, a, input, select, textarea, label')) {
+                return;
+            }
+            window.location.href = targetUrl;
+        });
+
+        slide.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                window.location.href = targetUrl;
+            }
+        });
+    });
+
+    function showSlide(index) {
+        const safeIndex = (index + slides.length) % slides.length;
+        activeIndex = safeIndex;
+
+        slides.forEach(function (slide, slideIndex) {
+            const isActive = slideIndex === safeIndex;
+            slide.classList.toggle('is-active', isActive);
+            slide.setAttribute('aria-hidden', String(!isActive));
+        });
+
+        heroDots.forEach(function (dot, dotIndex) {
+            const isActive = dotIndex === safeIndex;
+            dot.classList.toggle('active', isActive);
+            if (isActive) {
+                dot.setAttribute('aria-current', 'page');
+            } else {
+                dot.removeAttribute('aria-current');
+            }
+        });
+    }
+
+    function startSlider() {
+        clearInterval(sliderTimer);
+        sliderTimer = setInterval(function () {
+            showSlide(activeIndex + 1);
+        }, 3000);
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function () {
+            showSlide(activeIndex - 1);
+            startSlider();
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+            showSlide(activeIndex + 1);
+            startSlider();
+        });
+    }
+
+    // Keyboard navigation for slider
+    heroDots.forEach(function (dot, dotIndex) {
+        dot.addEventListener('click', function () {
+            const nextIndex = Number(dot.dataset.slide);
+            showSlide(nextIndex);
+            startSlider();
+            dot.focus();
+        });
+
+        dot.addEventListener('keydown', function (e) {
+            let nextIndex = activeIndex;
+            
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                nextIndex = (activeIndex + 1) % slides.length;
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                nextIndex = (activeIndex - 1 + slides.length) % slides.length;
+            }
+            
+            if (nextIndex !== activeIndex) {
+                showSlide(nextIndex);
+                startSlider();
+                heroDots[nextIndex].focus();
+            }
+        });
+    });
+
+    if (slides.length > 0) {
+        showSlide(0);
+        startSlider();
+    }
+
+    // Feature (badge) slider for mobile: animate badges like the hero on small screens.
+    const featureSlides = Array.from(document.querySelectorAll('.feature-slide'));
+    const featureDots = Array.from(document.querySelectorAll('.feature-dots .dot'));
+    let activeFeatureIndex = 0;
+    let featureTimer;
+
+    function showFeature(index) {
+        if (featureSlides.length === 0) return;
+        const safeIndex = (index + featureSlides.length) % featureSlides.length;
+        activeFeatureIndex = safeIndex;
+
+        featureSlides.forEach(function (slide, slideIndex) {
+            const isActive = slideIndex === safeIndex;
+            slide.classList.toggle('is-active', isActive);
+            slide.setAttribute('aria-hidden', String(!isActive));
+        });
+
+        featureDots.forEach(function (dot, dotIndex) {
+            const isActive = dotIndex === safeIndex;
+            dot.classList.toggle('active', isActive);
+            dot.setAttribute('aria-selected', String(isActive));
+        });
+    }
+
+    function startFeatureSlider() {
+        clearInterval(featureTimer);
+        featureTimer = setInterval(function () {
+            showFeature(activeFeatureIndex + 1);
+        }, 2800);
+    }
+
+    function stopFeatureSlider() {
+        clearInterval(featureTimer);
+        featureTimer = null;
+    }
+
+    featureDots.forEach(function (dot) {
+        dot.addEventListener('click', function () {
+            const nextIndex = Number(dot.dataset.feature);
+            showFeature(nextIndex);
+            startFeatureSlider();
+        });
+    });
+
+    function manageFeatureSliderOnResize() {
+        const isMobile = window.matchMedia('(max-width: 720px)').matches;
+        if (!featureSlides || featureSlides.length === 0) return;
+
+        if (isMobile) {
+            // ensure only first is visible initially
+            showFeature(activeFeatureIndex || 0);
+            startFeatureSlider();
+        } else {
+            // on larger screens show all badges by removing absolute positioning
+            stopFeatureSlider();
+            featureSlides.forEach(function (s) {
+                s.classList.add('is-active');
+                s.removeAttribute('aria-hidden');
+            });
+            featureDots.forEach(function (d) {
+                d.classList.remove('active');
+                d.setAttribute('aria-selected', 'false');
+            });
+        }
+    }
+
+    // initialize feature slider and update on resize
+    manageFeatureSliderOnResize();
+    window.addEventListener('resize', function () {
+        // small debounce
+        clearTimeout(window._featureResizeTimer);
+        window._featureResizeTimer = setTimeout(manageFeatureSliderOnResize, 150);
+    });
+});
+</script>
+{% endblock %}

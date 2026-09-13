@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<main class="shop-page">
+    <section class="shop-heading">
+        <div>
+            <p class="shop-eyebrow">Banta Bazar collection</p>
+            <h1>Useful things,<br><em>beautifully chosen.</em></h1>
+        </div>
+        <p class="shop-intro">Modern electronics and daily essentials selected for dependable performance and good living.</p>
+    </section>
+
+    <section class="shop-catalog" id="products" aria-labelledby="shop-title">
+        <aside class="shop-sidebar">
+            <p class="shop-sidebar-label">The collection</p>
+            <h2 id="shop-title">Shop all products</h2>
+            <p>Browse best-selling electronics and accessories, with clear pricing and easy cart access.</p>
+            <a class="shop-link" href="#products">View the catalog <span aria-hidden="true">&#8594;</span></a>
+        </aside>
+
+        <div class="shop-results">
+            <div class="shop-results-header">
+                <p>{{ products|length }} products</p>
+                <p>Curated for everyday use</p>
+            </div>
+            <div class="product-grid">
+                {% include 'partials/product_cards.html' %}
+            </div>
+        </div>
+    </div>
+</section>
+</main>
+{% endblock %}

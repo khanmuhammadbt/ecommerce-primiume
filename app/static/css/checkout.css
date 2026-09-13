@@ -1,0 +1,214 @@
+.page-content {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    max-width: 1180px;
+    padding-top: 42px;
+    padding-bottom: 56px;
+}
+
+.page-content > h1 {
+    margin-bottom: 24px;
+    color: var(--text);
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.cart-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
+    align-items: start;
+    gap: 28px;
+}
+
+.checkout-card,
+.checkout-summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background: var(--surface);
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: 0 14px 36px rgba(15, 106, 3, 0.08);
+}
+
+.checkout-card {
+    padding: 30px;
+}
+
+.checkout-summary-card {
+    position: sticky;
+    top: 24px;
+    padding: 26px;
+    background: #f8fbf6;
+}
+
+.page-content h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.35rem;
+}
+
+.checkout-form {
+    display: grid;
+    gap: 12px;
+}
+
+.checkout-form label {
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+
+.checkout-form input, .checkout-form textarea {
+    width: 100%;
+    border: 1px solid #d5dfd3;
+    border-radius: 10px;
+    background: #fbfdfb;
+    height: 35px;
+    padding: 20px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.checkout-form input:focus,
+.checkout-form textarea:focus {
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(15, 106, 3, 0.12);
+    outline: none;
+}
+
+.checkout-form textarea {
+    min-height: 120px;
+}
+
+.coupon-row {
+    align-items: end;
+    margin-top: 4px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.coupon-row label {
+    flex-basis: 100%;
+}
+
+.coupon-row input {
+    min-width: 0;
+}
+
+.delivery-note-row {
+    margin-top: 4px;
+    padding: 14px 16px;
+    background: #f2f7ef;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.delivery-note-row label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.delivery-note-row input[type="checkbox"] {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.checkout-form > .btn-primary {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 4px;
+    font-size: 1rem;
+}
+
+.checkout-summary-card hr {
+    width: 100%;
+    margin: 8px 0 2px;
+    border: 0;
+    border-top: 1px solid var(--border);
+}
+
+.checkout-summary-card .price,
+.checkout-summary-card .discount {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0;
+}
+
+.checkout-summary-card .price:last-of-type {
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    color: var(--primary-dark);
+    font-size: 1.12rem;
+    font-weight: 800;
+}
+
+.checkout-summary-card .discount {
+    color: #a33b16;
+}
+
+.checkout-summary-card > .btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.btn-secondary {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--primary-dark);
+    margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+    .cart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-summary-card {
+        position: static;
+    }
+}
+
+@media (max-width: 560px) {
+    .page-content {
+        padding-top: 28px;
+        padding-bottom: 36px;
+    }
+
+    .page-content > h1 {
+        margin-bottom: 18px;
+        font-size: 2rem;
+    }
+
+    .checkout-card,
+    .checkout-summary-card {
+        padding: 20px;
+        border-radius: 14px;
+    }
+
+    .coupon-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .coupon-row .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .checkout-form input,
+    .checkout-form textarea {
+        font-size: 16px;
+    }
+}

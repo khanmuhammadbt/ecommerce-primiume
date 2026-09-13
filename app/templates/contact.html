@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="editorial-page contact-page">
+    <div class="container">
+        <header class="editorial-hero">
+            <div>
+                <p class="editorial-eyebrow">Contact Banta Bazar / 02</p>
+                <h1>Let's talk<br><em>tech.</em></h1>
+            </div>
+            <p class="editorial-lede">Need help with an order, a product, or a general question? Our team is ready to assist with clear, direct support.</p>
+        </header>
+
+        <div class="editorial-rule"></div>
+
+        <div class="editorial-grid">
+            <p class="editorial-index">01 <span>/ FIND US</span></p>
+            <div class="editorial-copy">
+                {% if dynamic_content %}
+                    <div class="page-copy">{{ dynamic_content | replace('\n', '<br>') | safe }}</div>
+                {% endif %}
+                <h2>How to reach us</h2>
+                <p>We are happy to help with product questions, order support, or store inquiries.</p>
+                <ul class="contact-info editorial-contact-info">
+                    <li><strong>Phone</strong><a href="tel:+923200337720">+92 32 00 33 77 20</a></li>
+                    <li><strong>Email</strong><a href="mailto:info@bantabazar.com">info@bantabazar.com</a></li>
+                    <li><strong>Address</strong><span>Lahore, Pakistan</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="editorial-grid editorial-grid--faq">
+            <p class="editorial-index">02 <span>/ FAQ</span></p>
+            <div class="editorial-copy faq-list">
+                <h2>Frequently asked questions</h2>
+                <h3>How quickly will I get a response?</h3>
+                <p>We aim to respond as quickly as possible with practical answers for your request.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

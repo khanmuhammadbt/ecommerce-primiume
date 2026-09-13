@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="admin-dashboard-page container">
+    <div class="dashboard-header">
+        <div>
+            <p class="dashboard-subtitle">Admin Analytics</p>
+            <h1>Analytics</h1>
+            <p class="dashboard-intro">A modern overview of orders, revenue, inventory, customers, and coupon performance.</p>
+        </div>
+        <div class="dashboard-loading" id="dashboardLoading">Loading dashboard data...</div>
+    </div>
+
+    <div class="dashboard-content hidden" id="dashboardContent">
+        <div class="dashboard-kpi-grid">
+            <article class="dashboard-card dashboard-card--info">
+                <span class="dashboard-card__label">Total Orders</span>
+                <strong id="totalOrders">0</strong>
+            </article>
+            <article class="dashboard-card dashboard-card--success">
+                <span class="dashboard-card__label">Total Revenue</span>
+                <strong id="totalRevenue">PKR 0</strong>
+            </article>
+            <article class="dashboard-card dashboard-card--warning">
+                <span class="dashboard-card__label">Pending Orders</span>
+                <strong id="pendingOrders">0</strong>
+            </article>
+            <article class="dashboard-card dashboard-card--danger">
+                <span class="dashboard-card__label">Out of Stock</span>
+                <strong id="outOfStock">0</strong>
+            </article>
+            <article class="dashboard-card dashboard-card--neutral">
+                <span class="dashboard-card__label">Total Customers</span>
+                <strong id="totalCustomers">0</strong>
+            </article>
+        </div>
+
+        <div class="dashboard-section dashboard-section--grid">
+            <div class="dashboard-table-card">
+                <div class="dashboard-table-card__header">
+                    <h2>Website Visitors Overview</h2>
+                    <p class="dashboard-card__hint">Based on tracked sessions and IP addresses.</p>
+                </div>
+                <div class="dashboard-mini-stat-grid">
+                    <div><span>Total visitors</span><strong id="totalVisitors">0</strong></div>
+                    <div><span>New visitors</span><strong id="newVisitors">0</strong></div>
+                    <div><span>Returning visitors</span><strong id="returningVisitors">0</strong></div>
+                </div>
+            </div>
+
+            <div class="dashboard-table-card">
+                <div class="dashboard-table-card__header">
+                    <h2>Orders Breakdown</h2>
+                    <p class="dashboard-card__hint">Orders grouped by each customer's order history.</p>
+                </div>
+                <div class="dashboard-mini-stat-grid">
+                    <div><span>New customer orders</span><strong id="newCustomerOrders">0</strong></div>
+                    <div><span>Returning customer orders</span><strong id="returningCustomerOrders">0</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section dashboard-section--grid dashboard-section--tables">
+            <div class="dashboard-table-card">
+                <div class="dashboard-table-card__header">
+                    <h2>Repeat Add-to-cart Customers</h2>
+                    <p class="dashboard-card__hint">Customers who added the same product 12+ times.</p>
+                </div>
+                <div class="dashboard-table-scroll">
+                    <table class="dashboard-table">
+                        <thead><tr><th>Visitor</th><th>Product</th><th>Adds</th><th>Last activity</th></tr></thead>
+                        <tbody id="repeatCartCustomersBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="dashboard-table-card">
+                <div class="dashboard-table-card__header">
+                    <h2>Repeat Product-view Customers</h2>
+                    <p class="dashboard-card__hint">Customers who viewed the same product 2+ times.</p>
+                </div>
+                <div class="dashboard-table-scroll">
+                    <table class="dashboard-table">
+                        <thead><tr><th>Visitor</th><th>Product</th><th>Views</th><th>Last activity</th></tr></thead>
+                        <tbody id="repeatViewCustomersBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section dashboard-section--grid">
+            <div class="dashboard-chart-card dashboard-chart-card--large">
+                <div class="dashboard-chart-card__header">
+                    <h2>Revenue Trend</h2>
+                    <div class="dashboard-toggle-group">
+                        <button id="revenueToggle7" class="dashboard-toggle active" type="button" aria-label="Show revenue for last 7 days" aria-pressed="true">Last 7 days</button>
+                        <button id="revenueToggle30" class="dashboard-toggle" type="button" aria-label="Show revenue for last 30 days" aria-pressed="false">Last 30 days</button>
+                    </div>
+                </div>
+                <div class="dashboard-chart-wrapper">
+                    <canvas id="revenueTrendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-chart-card">
+                <div class="dashboard-chart-card__header">
+                    <h2>Order Status Breakdown</h2>
+                </div>
+                <div class="dashboard-chart-wrapper dashboard-chart-wrapper--compact">
+                    <canvas id="orderStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section dashboard-section--grid">
+            <div class="dashboard-chart-card">
+                <div class="dashboard-chart-card__header">
+                    <h2>Top Selling Products</h2>
+                </div>
+                <div class="dashboard-chart-wrapper dashboard-chart-wrapper--compact">
+                    <canvas id="topProductsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-chart-card">
+                <div class="dashboard-chart-card__header">
+                    <h2>Category Sales Distribution</h2>
+                </div>
+                <div class="dashboard-chart-wrapper dashboard-chart-wrapper--compact">
+                    <canvas id="categorySalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section dashboard-section--grid">
+            <div class="dashboard-chart-card dashboard-chart-card--large">
+                <div class="dashboard-chart-card__header">
+                    <h2>Coupon Usage</h2>
+                </div>
+                <div class="dashboard-chart-wrapper">
+                    <canvas id="couponUsageChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-chart-card dashboard-chart-card--large">
+                <div class="dashboard-chart-card__header">
+                    <h2>New Customers</h2>
+                </div>
+                <div class="dashboard-chart-wrapper">
+                    <canvas id="newCustomersChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section dashboard-section--grid">
+            <div class="dashboard-chart-card dashboard-chart-card--large">
+                <div class="dashboard-chart-card__header">
+                    <h2>Category Product Analytics</h2>
+                </div>
+                <div class="dashboard-chart-wrapper">
+                    <canvas id="categoryAnalyticsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section dashboard-section--grid dashboard-section--tables">
+            <div class="dashboard-table-card dashboard-table-card--wide">
+                <div class="dashboard-table-card__header">
+                    <h2>Per Product Analytics</h2>
+                </div>
+                <div class="dashboard-table-scroll">
+                    <table class="dashboard-table dashboard-table--orders">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Views</th>
+                                <th>Add to Cart</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productAnalyticsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section dashboard-section--grid dashboard-section--tables">
+            <div class="dashboard-table-card">
+                <div class="dashboard-table-card__header">
+                    <h2>Low Stock Products</h2>
+                </div>
+                <div class="dashboard-table-scroll">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowStockProductsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="dashboard-table-card">
+                <div class="dashboard-table-card__header">
+                    <h2>Recent Orders</h2>
+                </div>
+                <div class="dashboard-table-scroll">
+                    <table class="dashboard-table dashboard-table--orders">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentOrdersBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin-dashboard.js') }}"></script>
+{% endblock %}

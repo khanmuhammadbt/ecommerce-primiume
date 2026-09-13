@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-content container">
+    <h1>Search results</h1>
+    {% if query %}
+        <p>Showing results for "{{ query }}"</p>
+        <div class="product-grid">
+            {% if products %}
+                {% for product in products %}
+                <article class="product-card">
+                    {% if product.sale_percent > 0 %}
+                    <p class="sale-badge">-{{ product.sale_percent }}%</p>
+                    {% endif %}
+                    <a href="{{ url_for('main.product_details', product_id=product.id) }}">
+                        <img src="{{ product.image }}" alt="{{ product.name }}">
+                    </a>
+                    <div class="product-body">
+                        <span>{{ product.category }}</span>
+                        <h3><a class="product-link" href="{{ url_for('main.product_details', product_id=product.id) }}">{{ product.name }}</a></h3>
+                        <div class="product-rating" aria-label="Rated 5 out of 5 stars">
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                        </div>
+                        {% if product.sale_percent > 0 %}
+                        <p class="price"><span class="sale-price">PKR {{ product.sale_price_display }}</span> <span class="regular-price">{{ product.price }}</span></p>
+                        {% else %}
+                        <p class="price">{{ product.price }}</p>
+                        {% endif %}
+                        <form action="{{ url_for('main.add_to_cart') }}" method="post" onsubmit="return addToCartAjax(event, '{{ product.id }}')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            <button type="submit" class="btn btn-primary">Add to cart</button>
+                        </form>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <p>No products found. Try another keyword.</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>Enter a search term in the top bar to look for products.</p>
+    {% endif %}
+</section>
+{% endblock %}

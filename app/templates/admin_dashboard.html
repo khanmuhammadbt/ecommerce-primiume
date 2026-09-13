@@ -1,0 +1,616 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="admin-dashboard container">
+    <div id="dashboard-overview" class="admin-feature-section active">
+        <div class="admin-card">
+            <h1>Admin Dashboard</h1>
+            <p>Select a feature from the sidebar to manage that part of the store.</p>
+            {% if pending_orders %}
+            <p class="admin-notice">You have {{ pending_orders }} pending order{{ 's' if pending_orders != 1 else '' }}.</p>
+            {% else %}
+            <p class="admin-notice admin-notice--success">No pending orders at the moment.</p>
+            {% endif %}
+            {% if out_of_stock_products %}
+            <p class="admin-notice admin-notice--error">
+                Out of stock products: {% for product in out_of_stock_products %}#{{ product.id }}{{ ', ' if not loop.last else '' }}{% endfor %}.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="add-product-section" class="admin-feature-section">
+        <div class="admin-card">
+            <h2>Add Product</h2>
+            <form action="{{ url_for('main.admin_create_product') }}" method="post" enctype="multipart/form-data" class="admin-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="product-name">Name</label>
+                <input id="product-name" type="text" name="name" required>
+                <label for="product-price">Price</label>
+                <input id="product-price" type="number" name="price" required>
+                <label for="product-currency">Currency</label>
+                <input id="product-currency" type="text" name="currency" value="PKR" required>
+                <label for="product-category">Category</label>
+                <select id="product-category" name="category" class="category-select" required>
+                    <option value="">Select category</option>
+                    {% for category in available_categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                    <option value="__new__">Add new category...</option>
+                </select>
+                <div class="new-category-field" style="display:none; margin-top:0.5rem;">
+                    <label style="display:block; margin-bottom:0.35rem; font-weight:600;" for="new-category">New Category Name</label>
+                    <input id="new-category" type="text" name="new_category" placeholder="Type new category name here" style="width:100%;">
+                </div>
+                <label for="product-quantity">Quantity</label>
+                <input id="product-quantity" type="number" name="quantity" value="1" min="0" required>
+                <label for="product-sale">Sale percent</label>
+                <input id="product-sale" type="number" name="sale_percent" value="0" min="0" max="100">
+                <label for="product-image">Image URL</label>
+                <input id="product-image" type="text" name="image" placeholder="Optional image URL">
+                <label for="product-upload">Upload Images</label>
+                <input id="product-upload" type="file" name="image_file" accept="image/*" class="admin-image-input" multiple>
+                <div class="image-preview-box"><span>No image selected</span></div>
+                <label for="product-description">Description</label>
+                <textarea id="product-description" name="description"></textarea>
+                <button type="submit" class="btn btn-primary">Create Product</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="all-products-section" class="admin-feature-section">
+        <div class="admin-card">
+            <h2>See All Products</h2>
+            <div class="admin-form admin-search-form">
+                <label for="admin-product-search">Search products</label>
+                <input id="admin-product-search" type="search" placeholder="Search by name, category, price, or description...">
+            </div>
+            {% if products %}
+            <p class="product-search-empty" style="display:none; margin-bottom: 1rem;">No products match your search.</p>
+            <ul class="admin-product-list">
+                {% for product in products %}
+                <li>
+                    <details>
+                        <summary class="product-summary">
+                            <strong>#{{ product.id }} {{ product.name }}</strong> &mdash; {{ product.category }} &mdash; {{ product.price }}
+                            {% if product.quantity <= 0 %}
+                            <span class="product-stock-label product-stock-label--out">Out of stock</span>
+                            {% endif %}
+                        </summary>
+                        {% set gallery = product.images if product.images else ([product.image] if product.image else []) %}
+                        {% if gallery %}
+                        <div class="admin-product-image">
+                            <img src="{{ gallery[0] }}" alt="{{ product.name }}">
+                        </div>
+                        {% endif %}
+                        <form action="{{ url_for('main.admin_update_product', product_id=product.id) }}" method="post" enctype="multipart/form-data" class="admin-form admin-product-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="form-row">
+                                <label for="product-name-{{ product.id }}">Name</label>
+                                <input id="product-name-{{ product.id }}" type="text" name="name" value="{{ product.name }}" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="product-price-{{ product.id }}">Price</label>
+                                <input id="product-price-{{ product.id }}" type="text" name="price" value="{{ product.price.split()[0] if product.price else '' }}" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="product-currency-{{ product.id }}">Currency</label>
+                                <input id="product-currency-{{ product.id }}" type="text" name="currency" value="{{ product.currency }}" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="product-category-{{ product.id }}">Category</label>
+                                <select id="product-category-{{ product.id }}" name="category" class="category-select" required>
+                                    {% for category in available_categories %}
+                                    <option value="{{ category }}" {% if product.category == category %}selected{% endif %}>{{ category }}</option>
+                                    {% endfor %}
+                                    <option value="__new__" {% if product.category not in available_categories %}selected{% endif %}>Add new category...</option>
+                                </select>
+                                <div class="new-category-field" style="display:none; margin-top:0.5rem;">
+                                    <label for="new-category-name-{{ product.id }}" style="display:block; margin-bottom:0.35rem; font-weight:600;">New Category Name</label>
+                                    <input id="new-category-name-{{ product.id }}" type="text" name="new_category" placeholder="Type new category name here" style="width:100%;">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <label for="product-quantity-{{ product.id }}">Quantity</label>
+                                <input id="product-quantity-{{ product.id }}" type="number" name="quantity" value="{{ product.quantity }}" min="0" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="product-sale-percent-{{ product.id }}">Sale percent</label>
+                                <input id="product-sale-percent-{{ product.id }}" type="number" name="sale_percent" value="{{ product.sale_percent if product.sale_percent is defined else 0 }}" min="0" max="100">
+                            </div>
+                            <div class="form-row">
+                                <label for="product-image-url-{{ product.id }}">Image URL</label>
+                                <input id="product-image-url-{{ product.id }}" type="text" name="image" value="{{ product.image }}">
+                            </div>
+                            <div class="form-row">
+                                <label for="product-image-upload-{{ product.id }}">Upload Images</label>
+                                <input id="product-image-upload-{{ product.id }}" type="file" name="image_file" accept="image/*" class="admin-image-input" multiple>
+                                <div class="image-preview-box"><span>No image selected</span></div>
+                            </div>
+                            <div class="form-row">
+                                <label for="product-description-{{ product.id }}">Description</label>
+                                <textarea id="product-description-{{ product.id }}" name="description">{{ product.description }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                            <button type="submit" formaction="{{ url_for('main.admin_delete_product', product_id=product.id) }}" formmethod="post" class="btn btn-danger">Delete</button>
+                        </form>
+                    </details>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No products yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="offers-section" class="admin-feature-section">
+        <div class="admin-card">
+            <h2>Offers</h2>
+            {% if offers %}
+            <ul class="admin-list">
+                {% for offer in offers %}
+                <li>
+                    <details>
+                        <summary>{{ offer.title }} — {{ offer.discount }} — {{ offer.code }}</summary>
+                        <form action="{{ url_for('main.admin_update_offer', offer_id=offer.id) }}" method="post" class="admin-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="form-row">
+                                <label for="offer-update-title-{{ offer.id }}">Title</label>
+                                <input id="offer-update-title-{{ offer.id }}" type="text" name="title" value="{{ offer.title }}" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="offer-update-description-{{ offer.id }}">Description</label>
+                                <textarea id="offer-update-description-{{ offer.id }}" name="description" required>{{ offer.description }}</textarea>
+                            </div>
+                            <div class="form-row">
+                                <label for="offer-update-discount-{{ offer.id }}">Discount</label>
+                                <input id="offer-update-discount-{{ offer.id }}" type="number" name="discount" value="{{ offer.discount.replace('% off', '').replace('% Off', '').strip() if offer.discount else '' }}" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="offer-update-code-{{ offer.id }}">Code</label>
+                                <input id="offer-update-code-{{ offer.id }}" type="text" name="code" value="{{ offer.code }}" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Offer</button>
+                        </form>
+                        <form action="{{ url_for('main.admin_delete_offer', offer_id=offer.id) }}" method="post" style="margin-top: 12px;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this offer?');">Delete Offer</button>
+                        </form>
+                    </details>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No offers yet.</p>
+            {% endif %}
+        </div>
+
+        <section class="admin-form-section">
+            <h2>Create Offer</h2>
+            <form action="{{ url_for('main.admin_create_offer') }}" method="post" class="admin-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="offer-title">Title</label>
+                <input id="offer-title" type="text" name="title" required>
+                <label for="offer-description">Description</label>
+                <textarea id="offer-description" name="description" required></textarea>
+                <label for="offer-discount">Discount</label>
+                <input id="offer-discount" type="number" name="discount" required>
+                <label for="offer-code">Code</label>
+                <input id="offer-code" type="text" name="code" required>
+                <button type="submit" class="btn btn-primary">Create Offer</button>
+            </form>
+        </section>
+    </div>
+
+    <div id="filters-section" class="admin-feature-section">
+        <div class="admin-card">
+            <h2>Homepage Filters</h2>
+            <form action="{{ url_for('main.admin_update_homepage_filters') }}" method="post" class="admin-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-row">
+                    <label for="category-options">Category options (one per line)</label>
+                    <textarea id="category-options" name="categories" rows="6">{% for item in category_filters %}{{ item.label }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+                </div>
+                <div class="form-row">
+                    <label for="price-options">Price options (label:value, one per line)</label>
+                    <textarea id="price-options" name="price_ranges" rows="6">{% for item in price_filters %}{{ item.label }}:{{ item.value }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Filters</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="delivery-settings-section" class="admin-feature-section">
+        <div class="admin-card">
+            <h2>Delivery Charge Settings</h2>
+            <form action="{{ url_for('main.admin_update_delivery_charge') }}" method="post" class="admin-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-row">
+                    <label for="delivery-charge">Delivery charge (PKR)</label>
+                    <input id="delivery-charge" type="number" name="delivery_charge" value="{{ delivery_charge }}" min="0" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Delivery Charge</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="hero-section" class="admin-feature-section">
+        <div class="admin-card">
+            <h2>Homepage Hero Slides</h2>
+
+            {% for slide in hero_slides[:1] %}
+            <details class="hero-slide-details" {% if loop.first %}open{% endif %}>
+                <summary class="hero-slide-summary">
+                    <span>Slide {{ loop.index }}{% if slide.headline %} — {{ slide.headline }}{% endif %}</span>
+                    <span class="hero-slide-arrow" aria-hidden="true">▾</span>
+                </summary>
+                <div class="hero-slide-content">
+                    <div class="hero-slide-admin-card" style="border:1px solid #e5e7eb; border-radius:18px; padding:18px; background:#fff;">
+                        <form action="{{ url_for('main.admin_update_hero_slide', slide_id=slide.id) }}" method="post" enctype="multipart/form-data" class="admin-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="form-row">
+                                <label for="hero-eyebrow-{{ slide.id }}">Eyebrow</label>
+                                <input id="hero-eyebrow-{{ slide.id }}" type="text" name="eyebrow" value="{{ slide.eyebrow }}">
+                            </div>
+                            <div class="form-row">
+                                <label for="hero-headline-{{ slide.id }}">Headline</label>
+                                <input id="hero-headline-{{ slide.id }}" type="text" name="headline" value="{{ slide.headline }}">
+                            </div>
+                            <div class="form-row">
+                                <label for="hero-description-{{ slide.id }}">Description</label>
+                                <textarea id="hero-description-{{ slide.id }}" name="description">{{ slide.description }}</textarea>
+                            </div>
+                            <div class="form-row">
+                                <label for="hero-category-{{ slide.id }}">Slide Category</label>
+                                <select id="hero-category-{{ slide.id }}" name="category">
+                                    <option value="">No category filter</option>
+                                    {% for category in available_categories %}
+                                    <option value="{{ category }}" {% if slide.category == category %}selected{% endif %}>{{ category }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label for="hero-image-{{ slide.id }}">Image URL</label>
+                                <input id="hero-image-{{ slide.id }}" type="text" name="image" value="{{ slide.image }}">
+                            </div>
+                            <div class="form-row">
+                                <label for="hero-upload-{{ slide.id }}">Upload Image</label>
+                                <input id="hero-upload-{{ slide.id }}" type="file" name="image_file" accept="image/*" class="admin-image-input">
+                                <div class="image-preview-box"><span>No image selected</span></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Slide {{ loop.index }}</button>
+                        </form>
+                        <form action="{{ url_for('main.admin_delete_hero_slide', slide_id=slide.id) }}" method="post" style="margin-top:12px;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this hero slide?');">Delete Slide</button>
+                        </form>
+                    </div>
+                </div>
+            </details>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="badges-section" class="admin-feature-section">
+        <div class="admin-card">
+            <h2>Trust Badges</h2>
+            {% if trust_badges %}
+            <ul class="admin-list">
+                {% for badge in trust_badges %}
+                <li>
+                    <details>
+                        <form action="{{ url_for('main.admin_update_trust_badge', badge_id=badge.id) }}" method="post" class="admin-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="form-row">
+                                <label for="badge-icon-{{ badge.id }}">Icon</label>
+                                <input id="badge-icon-{{ badge.id }}" type="text" name="icon" value="{{ badge.icon }}">
+                            </div>
+                            <div class="form-row">
+                                <label for="badge-title-{{ badge.id }}">Title</label>
+                                <input id="badge-title-{{ badge.id }}" type="text" name="title" value="{{ badge.title }}" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="badge-description-{{ badge.id }}">Description</label>
+                                <textarea id="badge-description-{{ badge.id }}" name="description" required>{{ badge.description }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Badge</button>
+                        </form>
+                    </details>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No trust badges yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="password-section" class="admin-feature-section">
+        <div class="admin-card">
+            <h2>Change Admin Password</h2>
+            <form action="{{ url_for('main.admin_change_password') }}" method="post" class="admin-form confirm-password-change-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-row password-field">
+                    <label for="current-password">Current Password</label>
+                    <input id="current-password" type="password" name="current_password" required>
+                    <button type="button" class="password-toggle" aria-label="Toggle current password visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <div class="form-row password-field">
+                    <label for="new-password">New Password</label>
+                    <input id="new-password" type="password" name="new_password" required>
+                    <button type="button" class="password-toggle" aria-label="Toggle new password visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <div class="form-row password-field">
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input id="confirm-password" type="password" name="confirm_password" required>
+                    <button type="button" class="password-toggle" aria-label="Toggle confirm password visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="orders-section" class="admin-feature-section">
+        <div class="admin-card admin-orders">
+            <h2>Orders</h2>
+            <div class="admin-form admin-search-form">
+                <label for="order-search">Search orders</label>
+                <input id="order-search" type="search" placeholder="Search by order ID, customer name or email" autocomplete="off">
+            </div>
+            <div id="admin-orders-results">
+            {% if orders %}
+            <ul id="admin-orders-list" class="admin-order-list">
+                {% for order in orders %}
+                <li data-order-id="{{ order.id }}">
+                    <details>
+                        <summary>
+                            <div class="order-summary-head">
+                                <div>
+                                    <strong>Order #{{ order.id }}</strong>
+                                    <span class="order-summary-meta">{{ order.customer_name }} · {{ order.email }}</span>
+                                </div>
+                                <div class="order-summary-status">
+                                    <span class="order-status order-status--{{ order.status }}">{{ order.status | capitalize }}</span>
+                                    <span class="order-total">{{ order.total }}</span>
+                                </div>
+                            </div>
+                        </summary>
+                        <div class="order-summary-body">
+                            <div class="order-row">
+                                <div><strong>Placed:</strong> {{ order.created_at }}</div>
+                                <div><strong>Address:</strong> {{ order.address }}</div>
+                            </div>
+                            <div class="order-row">
+                                <div><strong>Coupon:</strong> {{ order.coupon_code or 'None' }}</div>
+                                <div><strong>Discount:</strong> {{ order.discount_text or 'None' }}</div>
+                            </div>
+                            <div class="order-items">
+                                <strong>Products</strong>
+                                <ul>
+                                    {% for item in order.items_data %}
+                                    <li>{{ item.name }} ×{{ item.quantity }} — {{ item.item_total }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="order-actions">
+                                <form action="{{ url_for('main.admin_update_order_status', order_id=order.id) }}" method="post">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <label for="order-status-{{ order.id }}">Order status</label>
+                                    <select id="order-status-{{ order.id }}" name="status">
+                                        <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="on_the_way" {% if order.status == 'on_the_way' %}selected{% endif %}>On the Way</option>
+                                        <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-secondary">Update Status</button>
+                                </form>
+                                <form action="{{ url_for('main.admin_delete_order', order_id=order.id) }}" method="post">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this order?');">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </details>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p id="admin-orders-empty">No orders found</p>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    const navLinks = Array.from(document.querySelectorAll('.admin-sidebar-link[data-admin-nav]'));
+    const passwordToggles = Array.from(document.querySelectorAll('.password-toggle'));
+    const imageInputs = Array.from(document.querySelectorAll('.admin-image-input'));
+    const categorySelects = Array.from(document.querySelectorAll('.category-select'));
+    const orderSearch = document.getElementById('order-search');
+    const ordersResults = document.getElementById('admin-orders-results');
+
+    if (orderSearch && ordersResults) {
+        const orderItems = Array.from(ordersResults.querySelectorAll('[data-order-id]'));
+        let searchRequestId = 0;
+
+        const showOrderResults = (matchingOrderIds) => {
+            orderItems.forEach((item) => {
+                item.hidden = !matchingOrderIds.has(item.dataset.orderId);
+            });
+
+            let emptyMessage = document.getElementById('admin-orders-empty');
+            if (matchingOrderIds.size === 0) {
+                if (!emptyMessage) {
+                    emptyMessage = document.createElement('p');
+                    emptyMessage.id = 'admin-orders-empty';
+                    emptyMessage.textContent = 'No orders found';
+                    ordersResults.appendChild(emptyMessage);
+                }
+                emptyMessage.hidden = false;
+            } else if (emptyMessage) {
+                emptyMessage.hidden = true;
+            }
+        };
+
+        orderSearch.addEventListener('input', async () => {
+            const query = orderSearch.value.trim().toLowerCase();
+            const requestId = ++searchRequestId;
+            const localMatches = new Set(
+                orderItems
+                    .filter((item) => item.textContent.toLowerCase().includes(query))
+                    .map((item) => item.dataset.orderId)
+            );
+            showOrderResults(localMatches);
+
+            try {
+                const response = await fetch(`/admin/api/orders?search=${encodeURIComponent(query)}`, {
+                    headers: { Accept: 'application/json' },
+                });
+                if (!response.ok || requestId !== searchRequestId) {
+                    return;
+                }
+
+                const data = await response.json();
+                showOrderResults(new Set(data.orders.map((order) => String(order.id))));
+            } catch (error) {
+                console.error('Order search failed:', error);
+            }
+        });
+    }
+
+    categorySelects.forEach((select) => {
+        const field = select.parentElement?.querySelector('.new-category-field');
+        const input = field?.querySelector('input[name="new_category"]');
+        if (!field || !input) {
+            return;
+        }
+
+        const toggleField = () => {
+            const shouldShow = select.value === '__new__';
+            field.style.display = shouldShow ? 'block' : 'none';
+            if (!shouldShow) {
+                input.value = '';
+            }
+        };
+
+        select.addEventListener('change', toggleField);
+        toggleField();
+    });
+
+    passwordToggles.forEach((toggle) => {
+        const input = toggle.parentElement.querySelector('input');
+        toggle.addEventListener('click', () => {
+            if (!input) return;
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+    });
+
+    imageInputs.forEach((input) => {
+        const previewBox = input.nextElementSibling;
+        if (!previewBox || !previewBox.classList.contains('image-preview-box')) {
+            return;
+        }
+
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file) {
+                previewBox.innerHTML = '<span>No image selected</span>';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                previewBox.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    const passwordChangeForm = document.querySelector('.confirm-password-change-form');
+    if (passwordChangeForm) {
+        passwordChangeForm.addEventListener('submit', (event) => {
+            const confirmed = window.confirm('Are you sure you want to change the admin password? This will immediately update the stored admin password.');
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        });
+    }
+
+    const sections = Array.from(document.querySelectorAll('.admin-feature-section'));
+
+    const activateSection = (sectionId) => {
+        sections.forEach((section) => {
+            section.classList.toggle('active', section.id === sectionId);
+        });
+
+        navLinks.forEach((link) => {
+            const target = link.getAttribute('href')?.split('#')[1];
+            link.classList.toggle('active', target === sectionId);
+        });
+    };
+
+    const initialSection = window.location.hash.replace('#', '') || 'dashboard-overview';
+    activateSection(sections.some((section) => section.id === initialSection) ? initialSection : 'dashboard-overview');
+
+    const productSearchInput = document.getElementById('admin-product-search');
+    const productList = document.querySelector('.admin-product-list');
+    const searchEmptyMessage = document.querySelector('.product-search-empty');
+
+    if (productSearchInput && productList) {
+        const productRows = Array.from(productList.querySelectorAll('li'));
+
+        const normalizeText = (text) => text.toLowerCase();
+
+        const filterProducts = () => {
+            const query = normalizeText(productSearchInput.value.trim());
+            let visibleCount = 0;
+
+            productRows.forEach((row) => {
+                const rowText = normalizeText(row.textContent || '');
+                const match = query === '' || rowText.includes(query);
+                row.style.display = match ? '' : 'none';
+                if (match) visibleCount += 1;
+            });
+
+            if (searchEmptyMessage) {
+                searchEmptyMessage.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
+        };
+
+        productSearchInput.addEventListener('input', filterProducts);
+    }
+
+    navLinks.forEach((link) => {
+        link.addEventListener('click', (event) => {
+            const target = link.getAttribute('href')?.split('#')[1];
+            if (!target) {
+                return;
+            }
+            event.preventDefault();
+            activateSection(target);
+            window.history.replaceState({}, '', `${window.location.pathname}#${target}`);
+        });
+    });
+})();
+</script>
+{% endblock %}

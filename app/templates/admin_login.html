@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="admin-login container">
+    <div class="admin-box">
+        <h1>Admin Login</h1>
+        <form action="{{ url_for('main.admin_login') }}" method="post" class="admin-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username"  required>
+            <label for="password">Password</label>
+            <div class="password-field">
+                <input type="password" id="password" name="password" required>
+                <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+            </div>
+            <button type="submit" class="btn btn-primary">Sign in</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const passwordToggles = Array.from(document.querySelectorAll('.password-toggle'));
+    passwordToggles.forEach((toggle) => {
+        const input = toggle.parentElement.querySelector('input');
+        toggle.addEventListener('click', () => {
+            if (!input) return;
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% for product in products %}
+<article class="product-card">
+    {% if product.quantity <= 0 %}
+    <p class="stock-badge out-of-stock">Out of stock</p>
+    {% else %}
+    <p class="stock-badge in-stock">In stock</p>
+    {% endif %}
+    {% if product.sale_percent > 0 %}
+    <p class="sale-badge">-{{ product.sale_percent }}%</p>
+    {% endif %}
+    <a href="{{ url_for('main.product_details', product_id=product.id) }}">
+        <img src="{{ product.image }}" alt="{{ product.name }}" width="375" height="375" loading="lazy">
+    </a>
+    <div class="product-body">
+        <span>{{ product.category }}</span>
+        {% set card_rating = product.average_rating|default(0)|int %}
+        <div class="product-rating" aria-label="{% if product.review_count %}Rated {{ product.average_rating }} out of 5 stars{% else %}No rating yet{% endif %}">
+            {% for i in range(5) %}
+            <span class="star{% if i < card_rating %} filled{% endif %}">★</span>
+            {% endfor %}
+        </div>
+        <h3><a class="product-link" href="{{ url_for('main.product_details', product_id=product.id) }}">{{ product.name }}</a></h3>
+        {% if product.sale_percent > 0 %}
+        <p class="price"><span class="sale-price">{{ product.currency }} {{ product.sale_price_display }}</span> <span class="regular-price">{{ product.currency }} {{ product.price }}</span></p>
+        {% else %}
+        <p class="price">{{ product.currency }} {{ product.price }}</p>
+        {% endif %}
+        <form action="{{ url_for('main.add_to_cart') }}" method="post" onsubmit="return addToCartAjax(event, '{{ product.id }}')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="product_id" value="{{ product.id }}">
+            <button type="submit" class="btn btn-primary">Add to cart</button>
+        </form>
+    </div>
+</article>
+{% endfor %}

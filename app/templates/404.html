@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="page-content container">
+    <h1>Page not found</h1>
+    <p>The page you requested could not be found. Please return to the shop and explore our latest products.</p>
+    <a class="btn btn-primary" href="{{ url_for('main.home') }}">Back to Home</a>
+</section>
+{% endblock %}

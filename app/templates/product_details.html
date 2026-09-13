@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="product-detail product-detail-page container" aria-labelledby="product-title">
+    <div class="detail-grid">
+        {% set gallery = product.images if product.images is defined and product.images else ([product.image] if product.image else []) %}
+        <div class="detail-image">
+            {% if product.sale_percent > 0 %}
+            <p class="sale-badge product-detail-sale-badge">-{{ product.sale_percent }}%</p>
+            {% endif %}
+            {% if gallery %}
+            <div class="detail-gallery">
+                <div class="detail-main-image">
+                    <img src="{{ gallery[0] }}" alt="{{ product.name }}" id="main-product-image">
+                </div>
+                {% if gallery|length > 1 %}
+                <div class="detail-gallery-thumbs">
+                    {% for image_url in gallery %}
+                    <img src="{{ image_url }}" alt="{{ product.name }} image {{ loop.index }}" class="detail-thumb {% if loop.first %}is-active{% endif %}" data-main-image="{{ image_url }}">
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="detail-info">
+            <span>{{ product.category }}</span>
+            <h1 id="product-title">{{ product.name }}</h1>
+            <div class="product-rating detail-rating" aria-label="Rated {{ average_rating }} out of 5 stars">
+                {% for i in range(5) %}
+                <span class="star{% if i < average_rating|int %} filled{% endif %}">★</span>
+                {% endfor %}
+            </div>
+            {% if product.sale_percent > 0 %}
+            <p class="price"><span class="sale-price">{{ product.currency }} {{ product.sale_price_display }}</span> <span class="regular-price">{{ product.currency }} {{ product.price }}</span></p>
+            {% else %}
+            <p class="price">{{ product.currency }} {{ product.price }}</p>
+            {% endif %}
+            {% if product.quantity <= 0 %}
+            <p class="detail-stock detail-stock-out">Out of stock</p>
+            {% else %}
+            <p class="detail-stock detail-stock-in">In stock</p>
+            {% endif %}
+            <p>Discover the key features of {{ product.name }} and shop with confidence at Banta Bazar.</p>
+            <p id="viewerCount" class="detail-viewers" aria-live="polite">0 people viewing this product</p>
+            <div class="product-summary">
+                <h2>Why this product stands out</h2>
+                <p>{{ product.description or 'A practical choice for shoppers who want dependable value and everyday performance.' }}</p>
+            </div>
+            <div class="detail-actions">
+                <form action="{{ url_for('main.add_to_cart') }}" method="post" onsubmit="return addToCartAjax(event, '{{ product.id }}')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <button type="submit" class="btn btn-primary ">Add to cart</button>
+                </form>
+                <a class="btn btn-cart" href="{{ url_for('main.cart') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    Go to Cart
+                </a>
+                <a class="btn btn-secondary" href="{{ url_for('main.home') }}">Back to shop</a>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="review-section product-reviews container">
+    <div class="review-summary">
+        <h2>Customer reviews</h2>
+        <div class="review-summary-meta">
+            <div class="average-rating">{{ average_rating }}/5</div>
+            <div class="star-rating" aria-label="Average rating {{ average_rating }} out of 5">
+                {% for i in range(5) %}
+                    <span class="star{% if i < average_rating|round(0, 'floor') %} filled{% endif %}">★</span>
+                {% endfor %}
+            </div>
+            <div class="review-count">({{ review_count }} reviews)</div>
+        </div>
+    </div>
+    <div class="review-list">
+        {% if product_reviews %}
+            {% for review in product_reviews %}
+            <article class="review-card">
+                <div class="review-card-header">
+                    <strong>{{ review.reviewer_name }}</strong>
+                    <span class="review-rating" aria-label="Rated {{ review.rating }} out of 5 stars">
+                        {% for i in range(5) %}
+                            <span class="star{% if i < review.rating %} filled{% endif %}">★</span>
+                        {% endfor %}
+                    </span>
+                </div>
+                <p class="review-comment">{{ review.comment }}</p>
+            </article>
+            {% endfor %}
+        {% else %}
+            <p class="no-reviews">No reviews yet. Be the first to review this product.</p>
+        {% endif %}
+    </div>
+    <div class="review-form-wrapper">
+        <h3>Leave your review</h3>
+        <form class="review-form" action="{{ url_for('main.product_review', product_id=product.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="reviewer_name">Your name</label>
+            <input id="reviewer_name" type="text" name="reviewer_name" placeholder="Anonymous">
+            <fieldset class="rating-fieldset">
+                <legend>Rating</legend>
+                <div class="rating-options">
+                    {% for rating_value in range(5, 0, -1) %}
+                    <label class="rating-option">
+                        <input type="radio" name="rating" value="{{ rating_value }}" {% if rating_value == 5 %}checked{% endif %}>
+                        {{ rating_value }} star{% if rating_value > 1 %}s{% endif %}
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+            <label for="comment">Your review</label>
+            <textarea id="comment" name="comment" rows="4" placeholder="Share your experience..."></textarea>
+            <button type="submit" class="btn btn-primary">Submit review</button>
+        </form>
+    </div>
+</section>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const mainImage = document.getElementById('main-product-image');
+
+    if (mainImage) {
+        document.querySelectorAll('.detail-thumb').forEach(function (thumb) {
+
+            thumb.addEventListener('click', function () {
+
+                const newSrc = thumb.dataset.mainImage;
+
+                if (!newSrc) return;
+
+                mainImage.src = newSrc;
+
+                document.querySelectorAll('.detail-thumb').forEach(function (item) {
+                    item.classList.toggle('is-active', item === thumb);
+                });
+            });
+        });
+    }
+
+    const viewerCountEl = document.getElementById('viewerCount');
+
+    // Jinja value ko safely JavaScript string mein pass karo
+    const productId = "{{ product.id }}";
+
+    if (viewerCountEl && typeof io !== 'undefined') {
+
+        const socket = io();
+
+        socket.on('connect', function () {
+
+            console.log('Socket connected');
+
+            socket.emit('join_product', {
+                product_id: productId
+            });
+        });
+
+        socket.on('viewer_count', function (payload) {
+
+            console.log('Viewer count:', payload);
+
+            if (!payload) return;
+
+            if (String(payload.product_id) !== String(productId)) {
+                return;
+            }
+
+            const count = Number(payload.count || 0);
+
+            viewerCountEl.textContent =
+                count === 1
+                    ? '1 person viewing this product'
+                    : count + ' people viewing this product';
+        });
+
+        window.addEventListener('beforeunload', function () {
+
+            socket.emit('leave_product', {
+                product_id: productId
+            });
+
+        });
+    }
+});
+</script>
+{% endblock %}

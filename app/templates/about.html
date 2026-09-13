@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="editorial-page about-page">
+    <div class="container">
+        <header class="editorial-hero">
+            <div>
+                <p class="editorial-eyebrow">About Banta Bazar / 01</p>
+                <h1>Useful tech.<br><em>Better living.</em></h1>
+            </div>
+            <p class="editorial-lede">Banta Bazar is a dependable electronics and accessories store that helps customers shop with confidence, clear pricing, and fast support.</p>
+        </header>
+
+        <div class="editorial-rule"></div>
+
+        <div class="editorial-grid">
+            <p class="editorial-index">01 <span>/ OUR STORY</span></p>
+            <div class="editorial-copy">
+                {% if dynamic_content %}
+                    <div class="page-copy">{{ dynamic_content | replace('\n', '<br>') | safe }}</div>
+                {% endif %}
+                <h2>Who we are</h2>
+                <p>We make it simple to find trusted electronics, everyday accessories, and value-focused deals in one place. Our goal is to help shoppers make quick, informed decisions without confusion.</p>
+                <p>Founded with a customer-first approach, Banta Bazar has grown by combining friendly service, practical product selection, and straightforward pricing.</p>
+            </div>
+        </div>
+
+        <div class="editorial-grid editorial-grid--secondary">
+            <p class="editorial-index">02 <span>/ THE PROMISE</span></p>
+            <div class="editorial-copy">
+                <h2>Why shoppers choose us</h2>
+                <ul class="editorial-list">
+                    <li>Clear product information and honest descriptions</li>
+                    <li>Secure checkout and dependable order support</li>
+                    <li>Helpful guidance for everyday tech needs</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="editorial-grid editorial-grid--faq">
+            <p class="editorial-index">03 <span>/ FAQ</span></p>
+            <div class="editorial-copy faq-list">
+                <h2>Frequently asked questions</h2>
+                <h3>What kinds of products are available?</h3>
+                <p>We offer electronics, accessories, and practical everyday items that support modern lifestyles.</p>
+                <h3>How can I contact the store?</h3>
+                <p>You can reach us through our contact page or by using the phone and email details listed there.</p>
+            </div>
+        </div>
+
+        <footer class="editorial-signoff">
+            <strong>Author:</strong> Banta Bazar Team
+        </footer>
+    </div>
+</section>
+{% endblock %}
